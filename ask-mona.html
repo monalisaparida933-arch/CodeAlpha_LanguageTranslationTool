@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ask Mona — FAQ Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #14110f;
+    --panel: #1c1815;
+    --panel-2: #221c17;
+    --line: #3a3229;
+    --gold: #d4a94c;
+    --gold-dim: #8a6f34;
+    --emerald: #4a9d7d;
+    --emerald-dim: #2f6551;
+    --text: #f0ebe3;
+    --text-dim: #a89d8d;
+    --error: #e8746b;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding: 40px 20px 60px;
+  }
+  .wrap{ max-width: 720px; margin: 0 auto; }
+  header{ text-align:center; margin-bottom: 30px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 40px;
+    margin: 0 0 8px;
+    letter-spacing: -0.5px;
+  }
+  h1 em{ font-style: italic; font-weight: 500; color: var(--emerald); }
+  header p{ color: var(--text-dim); font-size: 15px; margin: 0; }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .chat-head{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+  }
+  .avatar{
+    width: 38px; height: 38px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold), var(--gold-dim));
+    display:flex; align-items:center; justify-content:center;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; color: var(--ink);
+    flex-shrink: 0;
+  }
+  .chat-head .who{ flex: 1; }
+  .chat-head .name{ font-family:'Fraunces', serif; font-size: 16px; font-weight: 600; }
+  .chat-head .status{
+    font-family:'IBM Plex Mono', monospace; font-size: 11px; color: var(--emerald);
+    display:flex; align-items:center; gap: 6px;
+  }
+  .status .dot{ width:6px; height:6px; border-radius:50%; background: var(--emerald); display:inline-block; }
+  .clear-btn{
+    background: transparent; border: 1px solid var(--line); color: var(--text-dim);
+    border-radius: 8px; padding: 6px 12px; cursor:pointer; font-size: 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: border-color .15s, color .15s;
+  }
+  .clear-btn:hover{ border-color: var(--gold); color: var(--gold); }
+
+  .messages{
+    padding: 20px;
+    height: 420px;
+    overflow-y: auto;
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+  .messages::-webkit-scrollbar{ width: 6px; }
+  .messages::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 4px; }
+
+  .msg{ display:flex; gap: 10px; max-width: 85%; }
+  .msg.bot{ align-self:flex-start; }
+  .msg.user{ align-self:flex-end; flex-direction: row-reverse; }
+  .msg .bubble{
+    padding: 11px 15px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .msg.bot .bubble{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-top-left-radius: 4px;
+  }
+  .msg.user .bubble{
+    background: var(--emerald-dim);
+    color: var(--text);
+    border-top-right-radius: 4px;
+  }
+  .msg .mini-avatar{
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    display:flex; align-items:center; justify-content:center;
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 12px;
+  }
+  .msg.bot .mini-avatar{ background: var(--gold-dim); color: var(--ink); }
+  .msg.user .mini-avatar{ background: var(--line); color: var(--text-dim); }
+
+  .typing .bubble{ display:flex; gap: 4px; align-items:center; padding: 13px 16px; }
+  .typing .bubble span{
+    width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim);
+    animation: blink 1.2s infinite;
+  }
+  .typing .bubble span:nth-child(2){ animation-delay: .2s; }
+  .typing .bubble span:nth-child(3){ animation-delay: .4s; }
+  @keyframes blink{ 0%,80%,100%{ opacity:.25; } 40%{ opacity: 1; } }
+
+  .chips{
+    display:flex; flex-wrap: wrap; gap: 8px;
+    padding: 0 20px 14px;
+  }
+  .chip{
+    background: transparent; border: 1px solid var(--line); color: var(--text-dim);
+    border-radius: 999px; padding: 7px 13px; font-size: 12.5px; cursor:pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: border-color .15s, color .15s;
+  }
+  .chip:hover{ border-color: var(--gold); color: var(--gold); }
+
+  .input-row{
+    display:flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--line); background: var(--panel-2);
+  }
+  .input-row input{
+    flex:1; background: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+    color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14.5px; padding: 11px 14px;
+  }
+  .input-row input::placeholder{ color: var(--text-dim); }
+  .send-btn{
+    background: var(--gold); color: var(--ink); border: none; border-radius: 10px;
+    padding: 0 20px; cursor:pointer; font-weight: 600; font-family: 'IBM Plex Sans', sans-serif;
+    transition: transform .12s ease;
+  }
+  .send-btn:hover{ transform: translateY(-1px); }
+  .send-btn:disabled{ background: var(--gold-dim); cursor: default; transform: none; }
+
+  footer{
+    text-align:center; margin-top: 26px; color: var(--text-dim); font-size: 12px;
+    font-family:'IBM Plex Mono', monospace; letter-spacing: .5px;
+  }
+  footer strong{ color: var(--gold); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">CodeAlpha · AI Internship · Task 02</div>
+    <h1>Ask <em>Mona</em></h1>
+    <p>Your FAQ assistant for Monalisa Learn — courses, payments, certificates &amp; more.</p>
+  </header>
+
+  <div class="card">
+    <div class="chat-head">
+      <div class="avatar">M</div>
+      <div class="who">
+        <div class="name">Mona</div>
+        <div class="status"><span class="dot"></span>Online</div>
+      </div>
+      <button class="clear-btn" id="clearBtn">Clear chat</button>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="chips" id="chips"></div>
+    <div class="input-row">
+      <input type="text" id="userInput" placeholder="Ask a question…" maxlength="300" autocomplete="off" />
+      <button class="send-btn" id="sendBtn">Send</button>
+    </div>
+  </div>
+
+  <footer>Powered by <strong>Monalisa Inc.</strong> · INDIA</footer>
+</div>
+
+<script>
+/* ---------- FAQ knowledge base ---------- */
+const FAQS = [
+  { q: "How do I enroll in a course?", a: "Open any course page and click Enroll Now. If it's a paid course, you'll be taken to checkout; free courses give you instant access.", keywords: "enroll sign up register join course start begin" },
+  { q: "What payment methods do you accept?", a: "We accept credit and debit cards, UPI, net banking, and major digital wallets. All payments are processed securely at checkout.", keywords: "pay payment card upi wallet netbanking money price cost" },
+  { q: "Can I get a refund if I don't like a course?", a: "Yes — you can request a full refund within 7 days of purchase as long as you've completed less than 20% of the course.", keywords: "refund money back cancel return policy" },
+  { q: "How long do I have access to a course after enrolling?", a: "Once enrolled, you get lifetime access to that course, including any future updates to its content.", keywords: "access duration lifetime expire how long" },
+  { q: "Do I get a certificate after completing a course?", a: "Yes, you'll receive a digital completion certificate automatically once you finish all modules and the final assessment.", keywords: "certificate certification proof completion" },
+  { q: "Is the certificate verifiable online?", a: "Every certificate includes a unique ID and QR code that anyone can scan or look up on our verification page.", keywords: "verify certificate qr code authentic real" },
+  { q: "Can I download course videos to watch offline?", a: "Yes, our mobile app lets you download lessons for offline viewing. Downloads aren't currently available on the web player.", keywords: "download offline video save watch later" },
+  { q: "What if I forget my password?", a: "Click 'Forgot password' on the login page and we'll email you a secure reset link within a few minutes.", keywords: "forgot password reset login locked out account access" },
+  { q: "How do I contact an instructor with questions?", a: "Every course has a Q&A tab where you can post questions directly to the instructor and other learners.", keywords: "instructor mentor teacher contact ask discussion forum help" },
+  { q: "Are there any free courses available?", a: "Yes! We have a growing library of free courses — look for the 'Free' tag on the course catalog page.", keywords: "free no cost trial complimentary" },
+  { q: "Can I access courses on my mobile phone?", a: "Absolutely — our mobile apps for Android and iOS support full course playback, notes, and downloads.", keywords: "mobile phone app android ios tablet" },
+  { q: "How do I update my profile or email address?", a: "Go to Account Settings from your profile menu to update your name, email, password, or profile photo.", keywords: "profile account settings update change email name" },
+  { q: "What happens if I miss a live class?", a: "All live sessions are recorded automatically and added to the course within 24 hours, so you can catch up anytime.", keywords: "miss live class session recording replay" },
+  { q: "Do you offer group or team discounts?", a: "Yes, we offer discounted bulk pricing for teams of 5 or more. Reach out to our sales team through the Contact page.", keywords: "discount group team bulk corporate business pricing" },
+  { q: "How can I get technical support if the platform isn't working?", a: "Use the Help widget in the bottom corner of any page, or email support directly — our team responds within a few hours.", keywords: "technical support bug error not working broken issue problem help" },
+  { q: "Can I switch from one course to another after enrolling?", a: "Yes, within 7 days of enrolling you can switch to a different course of equal or lesser value at no extra cost.", keywords: "switch transfer exchange change course" }
+];
+
+/* ---------- NLP: tokenize, TF-IDF, cosine similarity ---------- */
+const STOPWORDS = new Set("a an the is are was were be been being do does did doing have has had having i you he she it we they me him her us them my your his its our their this that these those to of in on for with at by from as it's can could should would will shall may might not no if or and but so than then there here what which who whom how why when where".split(" "));
+
+function tokenize(text){
+  return text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w && !STOPWORDS.has(w));
+}
+
+const docs = FAQS.map(f => tokenize(f.q + " " + f.keywords));
+
+// document frequency
+const df = {};
+docs.forEach(tokens => {
+  new Set(tokens).forEach(t => { df[t] = (df[t] || 0) + 1; });
+});
+const N = docs.length;
+function idf(term){ return Math.log((N + 1) / ((df[term] || 0) + 1)) + 1; }
+
+function toVector(tokens){
+  const tf = {};
+  tokens.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
+  const vec = {};
+  Object.keys(tf).forEach(t => { vec[t] = tf[t] * idf(t); });
+  return vec;
+}
+
+const docVectors = docs.map(toVector);
+
+function cosineSim(vecA, vecB){
+  let dot = 0, normA = 0, normB = 0;
+  Object.keys(vecA).forEach(k => { normA += vecA[k] * vecA[k]; if (vecB[k]) dot += vecA[k] * vecB[k]; });
+  Object.keys(vecB).forEach(k => { normB += vecB[k] * vecB[k]; });
+  if (normA === 0 || normB === 0) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+function findBestMatch(query){
+  const qVec = toVector(tokenize(query));
+  let best = { score: 0, index: -1 };
+  docVectors.forEach((vec, i) => {
+    const score = cosineSim(qVec, vec);
+    if (score > best.score) best = { score, index: i };
+  });
+  return best;
+}
+
+/* ---------- Chat UI ---------- */
+const messagesEl = document.getElementById('messages');
+const chipsEl = document.getElementById('chips');
+const inputEl = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+function addMessage(text, who){
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${who}`;
+  const avatar = document.createElement('div');
+  avatar.className = 'mini-avatar';
+  avatar.textContent = who === 'bot' ? 'M' : 'Y';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+  wrap.appendChild(avatar);
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function showTyping(){
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot typing';
+  wrap.id = 'typingIndicator';
+  wrap.innerHTML = `<div class="mini-avatar">M</div><div class="bubble"><span></span><span></span><span></span></div>`;
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+function hideTyping(){
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+function renderChips(list){
+  chipsEl.innerHTML = '';
+  list.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = q;
+    btn.addEventListener('click', () => handleUserMessage(q));
+    chipsEl.appendChild(btn);
+  });
+}
+
+function randomSuggestions(excludeIndex, count){
+  const pool = FAQS.map((f, i) => i).filter(i => i !== excludeIndex);
+  const picked = [];
+  while (picked.length < count && pool.length){
+    const idx = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(idx, 1)[0]);
+  }
+  return picked.map(i => FAQS[i].q);
+}
+
+function handleUserMessage(text){
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  addMessage(trimmed, 'user');
+  inputEl.value = '';
+  chipsEl.innerHTML = '';
+  showTyping();
+
+  setTimeout(() => {
+    hideTyping();
+    const best = findBestMatch(trimmed);
+
+    if (best.index === -1 || best.score < 0.12){
+      addMessage("I couldn't find a close match for that. Here are a few things I can help with:", 'bot');
+      renderChips(randomSuggestions(-1, 4));
+    } else if (best.score < 0.32){
+      addMessage(`I think you're asking about: "${FAQS[best.index].q}"`, 'bot');
+      addMessage(FAQS[best.index].a, 'bot');
+      renderChips(randomSuggestions(best.index, 3));
+    } else {
+      addMessage(FAQS[best.index].a, 'bot');
+      renderChips(randomSuggestions(best.index, 3));
+    }
+  }, 550 + Math.random() * 400);
+}
+
+sendBtn.addEventListener('click', () => handleUserMessage(inputEl.value));
+inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') handleUserMessage(inputEl.value); });
+
+clearBtn.addEventListener('click', () => {
+  messagesEl.innerHTML = '';
+  chipsEl.innerHTML = '';
+  bootstrap();
+});
+
+function bootstrap(){
+  addMessage("Hi, I'm Mona 👋 Ask me anything about your courses, payments, or certificates.", 'bot');
+  renderChips(randomSuggestions(-1, 4));
+}
+bootstrap();
+</script>
+</body>
+</html>
